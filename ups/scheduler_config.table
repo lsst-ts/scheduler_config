@@ -1,6 +1,2 @@
-setupRequired(python)
-setupRequired(python_future)
-setupRequired(pex_config)
-setupRequired(sconsUtils)
+envSet(SCHEDULER_SETUP, ${PRODUCT_DIR}/config_run}
 
-envPrepend(PYTHONPATH, ${PRODUCT_DIR}/)
