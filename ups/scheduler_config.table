@@ -1,2 +1,2 @@
-envSet(SCHEDULER_SETUP, ${PRODUCT_DIR}/config_run}
+envSet(SCHEDULER_SETUP, ${PRODUCT_DIR}/config_run)
 
