@@ -15,38 +15,55 @@ from lsst.ts.scheduler.kernel import SurveyTopology
 
 if __name__ == 'config':
     survey_topology = SurveyTopology()
-    survey_topology.num_general_props = 4
-    survey_topology.general_propos = ["NorthEclipticSpur", "SouthCelestialPole", "WideFastDeep", "GalacticPlane"]
+    survey_topology.num_general_props = 1
+    survey_topology.general_propos = ["WideFastDeep"]
     survey_topology.num_seq_props = 1
     survey_topology.sequence_propos = ["DeepDrillingCosmology1"]
 
     nside = fs.set_default_nside(nside=32)  # Required
 
+    xtarget_maps = {}
+    xtarget_maps['u'] = fs.generate_goal_map(nside=nside, NES_fraction=0.,
+                                             WFD_fraction=0.31, SCP_fraction=0.,
+                                             GP_fraction=0., WFD_upper_edge_fraction=0.,
+                                             wfd_dec_min=-78., wfd_dec_max=18.,
+                                             generate_id_map=True)
+
+    xtarget_maps['g'] = fs.generate_goal_map(nside=nside, NES_fraction=0.,
+                                             WFD_fraction=0.44, SCP_fraction=0.,
+                                             GP_fraction=0., WFD_upper_edge_fraction=0.,
+                                             generate_id_map=True)
+
+    xtarget_maps['r'] = fs.generate_goal_map(nside=nside, NES_fraction=0.,
+                                             WFD_fraction=1.0, SCP_fraction=0.,
+                                             GP_fraction=0., WFD_upper_edge_fraction=0.,
+                                             wfd_dec_min=-78., wfd_dec_max=18.,
+                                             generate_id_map=True)
+
+    xtarget_maps['i'] = fs.generate_goal_map(nside=nside, NES_fraction=0.,
+                                             WFD_fraction=1.0, SCP_fraction=0.,
+                                             GP_fraction=0., WFD_upper_edge_fraction=0.,
+                                             wfd_dec_min=-78., wfd_dec_max=18.,
+                                             generate_id_map=True)
+
+    xtarget_maps['z'] = fs.generate_goal_map(nside=nside, NES_fraction=0.,
+                                             WFD_fraction=0.9, SCP_fraction=0.,
+                                             GP_fraction=0., WFD_upper_edge_fraction=0.,
+                                             wfd_dec_min=-78., wfd_dec_max=18.,
+                                             generate_id_map=True)
+
+    xtarget_maps['y'] = fs.generate_goal_map(nside=nside, NES_fraction=0.,
+                                             WFD_fraction=0.9, SCP_fraction=0.,
+                                             GP_fraction=0., WFD_upper_edge_fraction=0.,
+                                             wfd_dec_min=-78., wfd_dec_max=18.,
+                                             generate_id_map=True)
+
     target_maps = {}
-    target_maps['u'] = fs.generate_goal_map(nside=nside, NES_fraction=0.,
-                                            WFD_fraction=0.31, SCP_fraction=0.15,
-                                            GP_fraction=0.15, WFD_upper_edge_fraction=0.,
-                                            generate_id_map=True)
-    target_maps['g'] = fs.generate_goal_map(nside=nside, NES_fraction=0.2,
-                                            WFD_fraction=0.44, SCP_fraction=0.15,
-                                            GP_fraction=0.15, WFD_upper_edge_fraction=0.,
-                                            generate_id_map=True)
-    target_maps['r'] = fs.generate_goal_map(nside=nside, NES_fraction=0.46,
-                                            WFD_fraction=1.0, SCP_fraction=0.15,
-                                            GP_fraction=0.15, WFD_upper_edge_fraction=0.,
-                                            generate_id_map=True)
-    target_maps['i'] = fs.generate_goal_map(nside=nside, NES_fraction=0.46,
-                                            WFD_fraction=1.0, SCP_fraction=0.15,
-                                            GP_fraction=0.15, WFD_upper_edge_fraction=0.,
-                                            generate_id_map=True)
-    target_maps['z'] = fs.generate_goal_map(nside=nside, NES_fraction=0.4,
-                                            WFD_fraction=0.9, SCP_fraction=0.15,
-                                            GP_fraction=0.15, WFD_upper_edge_fraction=0.,
-                                            generate_id_map=True)
-    target_maps['y'] = fs.generate_goal_map(nside=nside, NES_fraction=0.,
-                                            WFD_fraction=0.9, SCP_fraction=0.15,
-                                            GP_fraction=0.15, WFD_upper_edge_fraction=0.,
-                                            generate_id_map=True)
+    for f in xtarget_maps:
+        fix_id = np.where(xtarget_maps[f][1] == 3)
+        xtarget_maps[f][1][fix_id] = 1
+        target_maps[f] = (xtarget_maps[f][0], xtarget_maps[f][1],
+                          {1: 'WideFastDeep'})
 
     target_2normfactor = {}
     for filtername in target_maps:
@@ -136,10 +153,8 @@ if __name__ == 'config':
 
     pair_map = np.zeros(len(target_maps['z'][0]))
     pair_map.fill(hp.UNSEEN)
-    wfd = np.where(target_maps['z'][1] == 3)
-    nes = np.where(target_maps['z'][1] == 1)
+    wfd = np.where(target_maps['z'][1] == 1)
     pair_map[wfd] = 1.
-    pair_map[nes] = 1.
 
     pairs_bfs.append(fs.Target_map_basis_function(filtername='',
                                                   target_map=pair_map,
@@ -227,5 +242,8 @@ if __name__ == 'config':
                                               fraction_limit=0.0012, ha_limits=([0., 0.5], [23.5, 24.]),
                                               nside=nside,
                                               filter_goals=filter_prop))
+
+    for dd in dd_surveys:
+        dd.survey_id = 2
 
     scheduler = fs.Core_scheduler([dd_surveys, pair_survey, surveys], nside=nside)  # Required
