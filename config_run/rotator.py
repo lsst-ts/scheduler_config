@@ -16,10 +16,10 @@ config.accel=1.0
 config.decel=1.0
 
 # Flag that if True enables the movement of the rotator during slews to put North-Up. If range is insufficient, then the alignment is North-Down. If the flag is False, then the rotator does not move during the slews, it is only tracking during the exposures.
-config.follow_sky=False
+config.follow_sky=True
 
 # Flag that if True enables the rotator to keep the image angle after a filter change, moving back the rotator to the previous angle after the rotator was placed in filter change position. If the flag is False, then the rotator is left in the filter change position.
-config.resume_angle=False
+config.resume_angle=True
 
 # Maximum position (units=degrees) of rotator.
 config.maxpos=90.0

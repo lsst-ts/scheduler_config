@@ -27,19 +27,19 @@ if __name__ == 'config':
                                             WFD_fraction=0.31, SCP_fraction=0.15,
                                             GP_fraction=0.15, WFD_upper_edge_fraction=0.,
                                             generate_id_map=True)
-    target_maps['g'] = fs.generate_goal_map(nside=nside, NES_fraction=0.2,
+    target_maps['g'] = fs.generate_goal_map(nside=nside, NES_fraction=0,
                                             WFD_fraction=0.44, SCP_fraction=0.15,
                                             GP_fraction=0.15, WFD_upper_edge_fraction=0.,
                                             generate_id_map=True)
-    target_maps['r'] = fs.generate_goal_map(nside=nside, NES_fraction=0.46,
+    target_maps['r'] = fs.generate_goal_map(nside=nside, NES_fraction=0.,
                                             WFD_fraction=1.0, SCP_fraction=0.15,
                                             GP_fraction=0.15, WFD_upper_edge_fraction=0.,
                                             generate_id_map=True)
-    target_maps['i'] = fs.generate_goal_map(nside=nside, NES_fraction=0.46,
+    target_maps['i'] = fs.generate_goal_map(nside=nside, NES_fraction=0.,
                                             WFD_fraction=1.0, SCP_fraction=0.15,
                                             GP_fraction=0.15, WFD_upper_edge_fraction=0.,
                                             generate_id_map=True)
-    target_maps['z'] = fs.generate_goal_map(nside=nside, NES_fraction=0.4,
+    target_maps['z'] = fs.generate_goal_map(nside=nside, NES_fraction=0.,
                                             WFD_fraction=0.9, SCP_fraction=0.15,
                                             GP_fraction=0.15, WFD_upper_edge_fraction=0.,
                                             generate_id_map=True)
