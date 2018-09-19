@@ -107,14 +107,14 @@ if __name__ == 'config':
         bfs.append(fs.Aggressive_Slewtime_basis_function(filtername=filtername, nside=nside, order=6., hard_max=120.))
         bfs.append(fs.Goal_Strict_filter_basis_function(filtername=filtername,
                                                         tag=None,
-                                                        time_lag_min=180.,
-                                                        time_lag_max=240.,
-                                                        time_lag_boost=300.,
+                                                        time_lag_min=300.,
+                                                        time_lag_max=360.,
+                                                        time_lag_boost=420.,
                                                         boost_gain=2.0,
                                                         unseen_before_lag=True,
                                                         proportion=1.,
-                                                        aways_available=True))
-        bfs.append(fs.Avoid_Fast_Revists(filtername=None, gap_min=30., nside=nside))  # Hide region for 0.5 hours
+                                                        aways_available=False))
+        bfs.append(fs.Avoid_Fast_Revists(filtername=None, gap_min=2880., nside=nside))  # Hide region for 2 days
         bfs.append(fs.Bulk_cloud_basis_function(max_cloud_map=cloud_map, nside=nside))
         bfs.append(fs.Moon_avoidance_basis_function(nside=nside, moon_distance=40.))
         # bfs.append(fs.CableWrap_unwrap_basis_function(nside=nside, activate_tol=70., unwrap_until=315,
@@ -144,14 +144,51 @@ if __name__ == 'config':
     pairs_bfs.append(fs.Target_map_basis_function(filtername='',
                                                   target_map=pair_map,
                                                   out_of_bounds_val=hp.UNSEEN, nside=nside))
-    pairs_bfs.append(fs.MeridianStripeBasisFunction(nside=nside, zenith_pad=(45.,), width=(35.,)))
+    pairs_bfs.append(fs.MeridianStripeBasisFunction(nside=nside, zenith_pad=(65.,), width=(55.,)))
     pairs_bfs.append(fs.Moon_avoidance_basis_function(nside=nside, moon_distance=30.))
 
     # pair_survey = [fs.Pairs_survey_scripted(pairs_bfs, [1., 1., 1.], ignore_obs='DD', min_alt=20.,
     #                                         filt_to_pair='griz')]
-    pair_survey = [fs.Pairs_different_filters_scripted(pairs_bfs, [1., 1., 1.], ignore_obs='DD', min_alt=20.,
-                                                       filt_to_pair='gri',
-                                                       filter_goals=filter_prop)]
+    pair_survey_1 = list()
+    pair_survey_2 = list()
+    # pair_survey_1.append(fs.Pairs_different_filters_scripted(pairs_bfs, [1., 1., 1.],
+    #                                                          ignore_obs=['DD', 'scripted', 'swap'],
+    #                                                        min_alt=20., note='swap1',
+    #                                                        dt=31., ttol=2., max_slew_to_pair=300.,
+    #                                                        filt_to_pair='gi',
+    #                                                        filter_goals=filter_prop))
+    #
+    # pair_survey_2.append(fs.Pairs_survey_scripted(pairs_bfs, [1., 1., 1.],
+    #                                               ignore_obs=['DD', 'greedy'], min_alt=20.,
+    #                                             dt=90., note='scripted1',
+    #                                             ttol=1., max_slew_to_pair=300.,
+    #                                             filt_to_pair='gi'))
+
+    pair_survey_1.append(fs.Pairs_different_filters_scripted(pairs_bfs, [1., 1., 1.],
+                                                             ignore_obs=['DD', 'scripted', 'swap'],
+                                                           min_alt=20., note='swap1',
+                                                           dt=40., ttol=10., max_slew_to_pair=300.,
+                                                           filt_to_pair='gi',
+                                                           filter_goals=filter_prop))
+
+    pair_survey_2.append(fs.Pairs_survey_scripted(pairs_bfs, [1., 1., 1.], ignore_obs=['DD', 'scripted', 'greedy'],
+                                                  min_alt=20.,
+                                                dt=90., note='scripted1',
+                                                ttol=10., max_slew_to_pair=300.,
+                                                filt_to_pair='gi'))
+
+    pair_survey_1.append(fs.Pairs_different_filters_scripted(pairs_bfs, [1., 1., 1.],
+                                                             ignore_obs=['DD', 'scripted', 'swap'],
+                                                           min_alt=20., note='swap2',
+                                                           dt=40., ttol=10., max_slew_to_pair=300.,
+                                                           filt_to_pair='rz',
+                                                           filter_goals=filter_prop))
+
+    pair_survey_2.append(fs.Pairs_survey_scripted(pairs_bfs, [1., 1., 1.], ignore_obs=['DD', 'scripted', 'greedy'],
+                                                  min_alt=20.,
+                                                dt=90., note='scripted2',
+                                                ttol=10., max_slew_to_pair=300.,
+                                                filt_to_pair='rz'))
 
     # surveys.append(fs.Pairs_survey_scripted(pairs_bfs, [1., 1., 1.], ignore_obs='DD', min_alt=20.,
     #                                         filt_to_pair='gri'))
@@ -232,4 +269,4 @@ if __name__ == 'config':
                                               nside=nside,
                                               filter_goals=filter_prop))
 
-    scheduler = fs.Core_scheduler([dd_surveys, pair_survey, surveys], nside=nside)  # Required
+    scheduler = fs.Core_scheduler([pair_survey_1, pair_survey_2, dd_surveys, surveys], nside=nside)  # Required
