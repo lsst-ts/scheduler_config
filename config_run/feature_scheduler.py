@@ -173,8 +173,8 @@ if __name__ == 'config':
 
     pair_survey_2.append(fs.Pairs_survey_scripted(pairs_bfs, [1., 1., 1.], ignore_obs=['DD', 'scripted', 'greedy'],
                                                   min_alt=20.,
-                                                dt=90., note='scripted1',
-                                                ttol=10., max_slew_to_pair=300.,
+                                                dt=120., note='scripted1',
+                                                ttol=30., max_slew_to_pair=300.,
                                                 filt_to_pair='gi'))
 
     pair_survey_1.append(fs.Pairs_different_filters_scripted(pairs_bfs, [1., 1., 1.],
@@ -186,8 +186,8 @@ if __name__ == 'config':
 
     pair_survey_2.append(fs.Pairs_survey_scripted(pairs_bfs, [1., 1., 1.], ignore_obs=['DD', 'scripted', 'greedy'],
                                                   min_alt=20.,
-                                                dt=90., note='scripted2',
-                                                ttol=10., max_slew_to_pair=300.,
+                                                dt=120., note='scripted2',
+                                                ttol=30., max_slew_to_pair=300.,
                                                 filt_to_pair='rz'))
 
     # surveys.append(fs.Pairs_survey_scripted(pairs_bfs, [1., 1., 1.], ignore_obs='DD', min_alt=20.,
