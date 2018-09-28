@@ -117,12 +117,17 @@ if __name__ == 'config':
         bfs.append(fs.Avoid_Fast_Revists(filtername=None, gap_min=30., nside=nside))  # Hide region for 0.5 hours
         bfs.append(fs.Bulk_cloud_basis_function(max_cloud_map=cloud_map, nside=nside))
         bfs.append(fs.Moon_avoidance_basis_function(nside=nside, moon_distance=40.))
+        bfs.append(fs.Twilight_observation_basis_function(filtername=filtername,
+                                                          twi_change=-18.,
+                                                          promote=filtername == 'y',
+                                                          unseen=False))
         # bfs.append(fs.CableWrap_unwrap_basis_function(nside=nside, activate_tol=70., unwrap_until=315,
         #                                               max_duration=90.))
         # bfs.append(fs.NorthSouth_scan_basis_function(length=70.))
 
         # weights = np.array([2., 0.1, 0.1, 1., 3., 1.5, 1.0, 1.0, 1.0])
-        weights = np.array([0.5, 1., target_map_weights[filtername], 1., 1., 1.0, 1.0, 1.0, 1.0])
+        weights = np.array([0.5, 1., target_map_weights[filtername], 1., 1., 1.0, 1.0, 1.0, 1.0,
+                            10. if filtername == 'y' else 1.])
         surveys.append(fs.Greedy_survey_fields(bfs, weights, block_size=1,
                                                filtername=filtername, dither=True,
                                                nside=nside,
@@ -227,5 +232,8 @@ if __name__ == 'config':
                                               fraction_limit=0.0012, ha_limits=([0., 0.5], [23.5, 24.]),
                                               nside=nside,
                                               filter_goals=filter_prop))
+
+    for dd in dd_surveys:
+        dd.extra_features['observe_queue'] = pair_survey[0].extra_features['queue']
 
     scheduler = fs.Core_scheduler([dd_surveys, pair_survey, surveys], nside=nside)  # Required
