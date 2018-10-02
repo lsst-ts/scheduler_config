@@ -1,2 +1,3 @@
 envSet(SCHEDULER_SETUP, ${PRODUCT_DIR}/config_run)
-
+# Because scheduler_config/scheduler_config is expected to be importable
+envPrepend(PYTHONPATH, ${PRODUCT_DIR}/)
