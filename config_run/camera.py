@@ -38,7 +38,7 @@ config.filter_mounted=['g', 'r', 'i', 'z', 'y']
 config.filter_pos='r'
 
 # Maximum average number of filter changes per year.
-config.filter_max_changes_avg_num=3000
+config.filter_max_changes_avg_num=300000
 
 # Time (units=seconds) to change a filter.
 config.filter_change_time=120.0
