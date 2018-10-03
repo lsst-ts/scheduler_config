@@ -159,13 +159,13 @@ if __name__ == 'config':
     pairs_bfs.append(fs.MeridianStripeBasisFunction(nside=nside, zenith_pad=(45.,), width=(35.,)))
     pairs_bfs.append(fs.Moon_avoidance_basis_function(nside=nside, moon_distance=30.))
 
-    # pair_survey = [fs.Pairs_survey_scripted(pairs_bfs, [1., 1., 1.], ignore_obs='DD', min_alt=20.,
-    #                                         filt_to_pair='griz')]
+    pair_survey = [fs.Pairs_survey_scripted(pairs_bfs, [1., 1., 1.], ignore_obs='DD', min_alt=20.,
+                                            filt_to_pair='griz')]
     # surveys.append(fs.Pairs_survey_scripted(pairs_bfs, [1., 1., 1.], ignore_obs='DD', min_alt=20.,
     #                                         filt_to_pair='gri'))
-    pair_survey = [fs.Pairs_different_filters_scripted(pairs_bfs, [1., 1., 1.], ignore_obs='DD', min_alt=20.,
-                                                       filt_to_pair='griz',
-                                                       filter_goals=filter_prop)]
+    # pair_survey = [fs.Pairs_different_filters_scripted(pairs_bfs, [1., 1., 1.], ignore_obs='DD', min_alt=20.,
+    #                                                    filt_to_pair='griz',
+    #                                                    filter_goals=filter_prop)]
     # surveys.append(fs.Pairs_survey_scripted([], [], ignore_obs='DD'))
 
     # Set up the DD
