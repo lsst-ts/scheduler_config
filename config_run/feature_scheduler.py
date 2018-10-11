@@ -20,7 +20,7 @@ if __name__ == 'config':
     survey_topology.num_seq_props = 1
     survey_topology.sequence_propos = ["DeepDrillingCosmology1"]
 
-    nside = fs.set_default_nside(nside=32)  # Required
+    nside = fs.set_default_nside(nside=32)
 
     target_maps = {}
     target_maps['u'] = fs.generate_goal_map(nside=nside, NES_fraction=0.,
@@ -48,205 +48,125 @@ if __name__ == 'config':
                                             GP_fraction=0.15, WFD_upper_edge_fraction=0.,
                                             generate_id_map=True)
 
-    target_2normfactor = {}
-    for filtername in target_maps:
-        target_2normfactor[filtername] = target_maps[filtername][0]
+    even_year_target = {}
+    odd_year_target = {}
+    for fname in target_maps:
+        even_year_target[fname] = target_maps[fname][0]
+        odd_year_target[fname] = target_maps[fname][0]
 
-    norm_factor = fs.calc_norm_factor(target_2normfactor)
+    up = 1.75
+    down = 0.25
 
-    cloud_map = fs.generate_cloud_map(target_maps, filtername='i',
-                                      wfd_cloud_max=0.7,
-                                      scp_cloud_max=0.7,
-                                      gp_cloud_max=0.7,
-                                      nes_cloud_max=0.7)
+    # Let's find the healpix that divides the WFD area in half
+    wfd = even_year_target['r'] * 0
+    wfd[np.where(even_year_target['r'] == 1)] = 1
+    wfd_accum = np.cumsum(wfd)
 
-    width = (20.,)
-    z_pad = (28.,)
-    weight = (1.0,)
-    height = (80.,)
+    split_indx = np.max(np.where(wfd_accum < wfd_accum.max() / 2.))
 
-    filters = ['u', 'g', 'r', 'i', 'z', 'y']
-    # filters = ['r', 'i']
+    indx = np.arange(even_year_target['r'].size)
+    top_half_wfd = np.where((even_year_target['r'] == 1) & (indx <= split_indx))
+    bottom_half_wfd = np.where((even_year_target['r'] == 1) & (indx > split_indx))
+
+    for filtername in even_year_target:
+        even_year_target[filtername][top_half_wfd] *= up
+        even_year_target[filtername][bottom_half_wfd] *= down
+
+        odd_year_target[filtername][top_half_wfd] *= down
+        odd_year_target[filtername][bottom_half_wfd] *= up
+
+    even_norm = fs.calc_norm_factor(even_year_target)
+    odd_norm = fs.calc_norm_factor(odd_year_target)
+
     surveys = []
-
-    sb_limit_map = fs.utils.generate_sb_map(target_maps, filters)
-
-    filter_prop = {'u': 0.0774,
-                   'g': 0.117,
-                   'r': 0.224,
-                   'i': 0.224,
-                   'z': 0.200,
-                   'y': 0.154}
-
-    target_map_weights = {'u': 0.1,
-                          'g': 0.1,
-                          'r': 0.075,
-                          'i': 0.05,
-                          'z': 0.05,
-                          'y': 0.05}
-
-    twilight_weight = {'u': 1.,
-                       'g': 1.,
-                       'r': 1.,
-                       'i': 1.,
-                       'z': 1.,
-                       'y': 10.}
-
-    for filtername in filters:
-        bfs = list()
-        # bfs.append(fs.M5_diff_basis_function(filtername=filtername, nside=nside))
-        bfs.append(fs.HourAngle_bonus_basis_function(max_hourangle=4.))
+    mod_year = 2
+    offset = 1
+    # Set up observations to be taken in blocks
+    filter1s = ['u', 'g', 'r', 'i', 'z', 'y']
+    filter2s = [None, 'g', 'r', 'i', None, None]
+    for filtername, filtername2 in zip(filter1s, filter2s):
+        bfs = []
         bfs.append(fs.M5_diff_basis_function(filtername=filtername, nside=nside))
-        #     bfs.append(fs.Skybrightness_limit_basis_function(nside=nside,
-        #                                                      filtername=filtername,
-        #                                                      min=sb_limit_map[filtername]['min'],
-        #                                                      max=sb_limit_map[filtername]['max']))
-        bfs.append(fs.Target_map_basis_function(filtername=filtername,
-                                                target_map=target_maps[filtername][0],
-                                                out_of_bounds_val=hp.UNSEEN, nside=nside,
-                                                norm_factor=norm_factor))
-        bfs.append(fs.MeridianStripeBasisFunction(nside=nside, width=width,
-                                                  weight=weight,
-                                                  height=height,
-                                                  zenith_pad=z_pad))
-        # bfs.append(fs.HADecAltAzPatchBasisFunction(nside=nside,
-        #                                            patches=patches[::-1]))
-        bfs.append(fs.Aggressive_Slewtime_basis_function(filtername=filtername, nside=nside, order=6., hard_max=120.))
-        bfs.append(fs.Goal_Strict_filter_basis_function(filtername=filtername,
-                                                        tag=None,
-                                                        time_lag_min=180.,
-                                                        time_lag_max=240.,
-                                                        time_lag_boost=300.,
-                                                        boost_gain=2.0,
-                                                        unseen_before_lag=True,
-                                                        proportion=1.,
-                                                        aways_available=True))
-        bfs.append(fs.Avoid_Fast_Revists(filtername=None, gap_min=120., nside=nside))  # Hide region for 2 hours
-        bfs.append(fs.Bulk_cloud_basis_function(max_cloud_map=cloud_map, nside=nside))
-        bfs.append(fs.Moon_avoidance_basis_function(nside=nside, moon_distance=40.))
-        bfs.append(fs.Twilight_observation_basis_function(filtername=filtername,
-                                                          twi_change=-18.,
-                                                          promote=filtername == 'y',
-                                                          unseen=filtername == 'u'))
-        # bfs.append(fs.CableWrap_unwrap_basis_function(nside=nside, activate_tol=70., unwrap_until=315,
-        #                                               max_duration=90.))
-        # bfs.append(fs.NorthSouth_scan_basis_function(length=70.))
+        if filtername2 is not None:
+            bfs.append(fs.M5_diff_basis_function(filtername=filtername2, nside=nside))
+        bfs.append(fs.Target_map_modulo_basis_function(filtername=filtername,
+                                                    target_map=even_year_target[filtername],
+                                                    mod_year=mod_year, offset=0,
+                                                    out_of_bounds_val=hp.UNSEEN, nside=nside,
+                                                    norm_factor=even_norm))
+        if filtername2 is not None:
+            bfs.append(fs.Target_map_modulo_basis_function(filtername=filtername2,
+                                                        target_map=even_year_target[filtername2],
+                                                        mod_year=mod_year, offset=0,
+                                                        out_of_bounds_val=hp.UNSEEN, nside=nside,
+                                                        norm_factor=even_norm))
 
-        # weights = np.array([2., 0.1, 0.1, 1., 3., 1.5, 1.0, 1.0, 1.0])
-        weights = np.array([0.5, 1., target_map_weights[filtername], 1., 1., 1.0, 1.0, 1.0, 1.0,
-                            twilight_weight[filtername]])
-        surveys.append(fs.Greedy_survey_fields(bfs, weights, block_size=1,
-                                               filtername=filtername, dither=True,
-                                               nside=nside,
-                                               tag_fields=True,
-                                               tag_map=target_maps[filtername][1],
-                                               tag_names=target_maps[filtername][2],
-                                               ignore_obs='DD'))
+        bfs.append(fs.Target_map_modulo_basis_function(filtername=filtername,
+                                                    target_map=odd_year_target[filtername],
+                                                    mod_year=mod_year, offset=offset,
+                                                    out_of_bounds_val=hp.UNSEEN, nside=nside,
+                                                    norm_factor=odd_norm))
+        if filtername2 is not None:
+            bfs.append(fs.Target_map_modulo_basis_function(filtername=filtername2,
+                                                        target_map=odd_year_target[filtername2],
+                                                        mod_year=mod_year, offset=offset,
+                                                        out_of_bounds_val=hp.UNSEEN, nside=nside,
+                                                        norm_factor=odd_norm))
+        bfs.append(fs.Slewtime_basis_function(filtername=filtername, nside=nside))
+        bfs.append(fs.Strict_filter_basis_function(filtername=filtername))
+        bfs.append(fs.Zenith_shadow_mask_basis_function(nside=nside, shadow_minutes=60., max_alt=76.))
+        weights = np.array([3.0, 3.0, .3, .3, 0.3, 0.3, 3., 3., 0.])
+        if filtername2 is None:
+            # Need to scale weights up so filter balancing still works properly.
+            weights = np.array([6.0, 0.6, 0.6, 3., 3., 0.])
+        # XXX-
+        # This is where we could add a look-ahead basis function to include m5_diff in the future.
+        # Actually, having a near-future m5 would also help prevent switching to u or g right at twilight?
+        # Maybe just need a "filter future" basis function?
+        if filtername2 is None:
+            survey_name = 'blob, %s' % filtername
+        else:
+            survey_name = 'blob, %s%s' % (filtername, filtername2)
+        surveys.append(fs.Blob_survey(bfs, weights, filtername=filtername, filter2=filtername2,
+                                      survey_note=survey_name,
+                                     tag_fields=True,
+                                     tag_map=target_maps[filtername][1],
+                                     tag_names=target_maps[filtername][2]))
 
-    # Set up pairs
-    pairs_bfs = []
+    # Set up the greedy surveys for filling time when can't take pairs.
+    filters = ['u', 'g', 'r', 'i', 'z', 'y']
+    greedy_surveys = []
+    for filtername in filters:
+        bfs = []
+        bfs.append(fs.M5_diff_basis_function(filtername=filtername, nside=nside))
+        bfs.append(fs.Target_map_modulo_basis_function(filtername=filtername,
+                                                    mod_year=mod_year, offset=0,
+                                                    target_map=even_year_target[filtername],
+                                                    norm_factor=even_norm))
 
-    pair_map = np.zeros(len(target_maps['z'][0]))
-    pair_map.fill(hp.UNSEEN)
-    wfd = np.where(target_maps['z'][1] == 3)
-    nes = np.where(target_maps['z'][1] == 1)
-    pair_map[wfd] = 1.
-    pair_map[nes] = 1.
+        bfs.append(fs.Target_map_modulo_basis_function(filtername=filtername,
+                                                    mod_year=mod_year, offset=offset,
+                                                    target_map=even_year_target[filtername],
+                                                    out_of_bounds_val=hp.UNSEEN, nside=nside,
+                                                    norm_factor=odd_norm))
 
-    pairs_bfs.append(fs.Target_map_basis_function(filtername='',
-                                                  target_map=pair_map,
-                                                  out_of_bounds_val=hp.UNSEEN, nside=nside))
-    pairs_bfs.append(fs.MeridianStripeBasisFunction(nside=nside, zenith_pad=(45.,), width=(35.,)))
-    pairs_bfs.append(fs.Moon_avoidance_basis_function(nside=nside, moon_distance=30.))
+        bfs.append(fs.North_south_patch_basis_function(zenith_min_alt=50., nside=nside))
+        bfs.append(fs.Slewtime_basis_function(filtername=filtername, nside=nside))
+        bfs.append(fs.Strict_filter_basis_function(filtername=filtername))
+        bfs.append(fs.Zenith_shadow_mask_basis_function(nside=nside, shadow_minutes=60., max_alt=76.))
+        weights = np.array([3.0, 0.3, 0.3, 1., 3., 3., 0.])
+        # Might want to try ignoring DD observations here, so the DD area gets covered normally--DONE
+        sv = fs.Greedy_survey_fields(bfs, weights, block_size=1, filtername=filtername,
+                                     dither=True, nside=nside, ignore_obs='DD',
+                                     tag_fields=True,
+                                     tag_map=target_maps[filtername][1],
+                                     tag_names=target_maps[filtername][2])
+        greedy_surveys.append(sv)
 
-    # pair_survey = [fs.Pairs_survey_scripted(pairs_bfs, [1., 1., 1.], ignore_obs='DD', min_alt=20.,
-    #                                         filt_to_pair='griz')]
-    # surveys.append(fs.Pairs_survey_scripted(pairs_bfs, [1., 1., 1.], ignore_obs='DD', min_alt=20.,
-    #                                         filt_to_pair='gri'))
-    pair_survey = [fs.Pairs_different_filters_scripted(pairs_bfs, [1., 1., 1.], ignore_obs='DD', min_alt=20.,
-                                                       filt_to_pair='griz',
-                                                       filter_goals=filter_prop)]
-    # surveys.append(fs.Pairs_survey_scripted([], [], ignore_obs='DD'))
+    # Set up the DD surveys
+    dd_surveys = fs.generate_dd_surveys()
 
-    # Set up the DD
-    # ELAIS S1
-    dd_surveys = list()
-    dd_surveys.append(fs.Deep_drilling_survey(9.45, -44., sequence='rgizy',
-                                              nvis=[20, 10, 20, 26, 20],
-                                              survey_name='DD:ELAISS1', reward_value=100, moon_up=None,
-                                              fraction_limit=0.148, ha_limits=([0., 0.5], [23.5, 24.]),
-                                              nside=nside,
-                                              avoid_same_day=True,
-                                              filter_goals=filter_prop))
-    dd_surveys.append(fs.Deep_drilling_survey(9.45, -44., sequence='u',
-                                              nvis=[7],
-                                              survey_name='DD:u,ELAISS1', reward_value=100, moon_up=False,
-                                              fraction_limit=0.0012, ha_limits=([0., 0.5], [23.5, 24.]),
-                                              nside=nside))
+    survey_list_o_lists = [dd_surveys, surveys, greedy_surveys]
 
-    # XMM-LSS
-    dd_surveys.append(fs.Deep_drilling_survey(35.708333, -4 - 45 / 60., sequence='rgizy',
-                                              nvis=[20, 10, 20, 26, 20],
-                                              survey_name='DD:XMM-LSS', reward_value=100, moon_up=None,
-                                              fraction_limit=0.148, ha_limits=([0., 0.5], [23.5, 24.]),
-                                              nside=nside,
-                                              avoid_same_day=True,
-                                              filter_goals=filter_prop))
-    dd_surveys.append(fs.Deep_drilling_survey(35.708333, -4 - 45 / 60., sequence='u',
-                                              nvis=[7],
-                                              survey_name='DD:u,XMM-LSS', reward_value=100, moon_up=False,
-                                              fraction_limit=0.0012, ha_limits=([0., 0.5], [23.5, 24.]),
-                                              nside=nside))
+    scheduler = fs.Core_scheduler(survey_list_o_lists, nside=nside)
 
-    # Extended Chandra Deep Field South
-    # XXX--Note, this one can pass near zenith. Should go back and add better planning on this.
-    dd_surveys.append(fs.Deep_drilling_survey(53.125, -28. - 6 / 60., sequence='rgizy',
-                                              nvis=[20, 10, 20, 26, 20],
-                                              survey_name='DD:ECDFS', reward_value=100, moon_up=None,
-                                              fraction_limit=0.148, ha_limits=[[0.5, 1.0], [23., 22.5]],
-                                              nside=nside,
-                                              avoid_same_day=True,
-                                              filter_goals=filter_prop))
-    dd_surveys.append(fs.Deep_drilling_survey(53.125, -28. - 6 / 60., sequence='u',
-                                              nvis=[7],
-                                              survey_name='DD:u,ECDFS', reward_value=100, moon_up=False,
-                                              fraction_limit=0.0012, ha_limits=[[0.5, 1.0], [23., 22.5]],
-                                              nside=nside))
-    # COSMOS
-    dd_surveys.append(fs.Deep_drilling_survey(150.1, 2. + 10. / 60. + 55 / 3600., sequence='rgizy',
-                                              nvis=[20, 10, 20, 26, 20],
-                                              survey_name='DD:COSMOS', reward_value=100, moon_up=None,
-                                              fraction_limit=0.148, ha_limits=([0., 0.5], [23.5, 24.]),
-                                              nside=nside,
-                                              avoid_same_day=True,
-                                              filter_goals=filter_prop))
-    dd_surveys.append(fs.Deep_drilling_survey(150.1, 2. + 10. / 60. + 55 / 3600., sequence='u',
-                                              nvis=[7], ha_limits=([0., .5], [23.5, 24.]),
-                                              survey_name='DD:u,COSMOS', reward_value=100, moon_up=False,
-                                              fraction_limit=0.0012,
-                                              nside=nside))
-
-    # Extra DD Field, just to get to 5. Still not closed on this one
-    dd_surveys.append(fs.Deep_drilling_survey(349.386443, -63.321004, sequence='rgizy',
-                                              nvis=[20, 10, 20, 26, 20],
-                                              survey_name='DD:290', reward_value=100, moon_up=None,
-                                              fraction_limit=0.148, ha_limits=([0., 0.5], [23.5, 24.]),
-                                              nside=nside,
-                                              avoid_same_day=True,
-                                              filter_goals=filter_prop))
-    dd_surveys.append(fs.Deep_drilling_survey(349.386443, -63.321004, sequence='u',
-                                              nvis=[7],
-                                              survey_name='DD:u,290', reward_value=100, moon_up=False,
-                                              fraction_limit=0.0012, ha_limits=([0., 0.5], [23.5, 24.]),
-                                              nside=nside,
-                                              filter_goals=filter_prop))
-
-    # add queue to u and y band survey so it will not change those filters if queue has targets
-
-    surveys[0].extra_features['observe_queue'] = pair_survey[0].extra_features['queue']
-    surveys[5].extra_features['observe_queue'] = pair_survey[0].extra_features['queue']
-
-    for dd in dd_surveys:
-        dd.extra_features['observe_queue'] = pair_survey[0].extra_features['queue']
-
-    scheduler = fs.Core_scheduler([dd_surveys, pair_survey, surveys], nside=nside)  # Required
