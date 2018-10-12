@@ -120,12 +120,12 @@ if __name__ == 'config':
                                                         boost_gain=2.0,
                                                         unseen_before_lag=True,
                                                         proportion=1.,
-                                                        aways_available=True))
+                                                        aways_available=False))
         bfs.append(fs.Avoid_Fast_Revists(filtername=None, gap_min=120., nside=nside))  # Hide region for 2 hours
         bfs.append(fs.Bulk_cloud_basis_function(max_cloud_map=cloud_map, nside=nside))
         bfs.append(fs.Moon_avoidance_basis_function(nside=nside, moon_distance=40.))
         bfs.append(fs.Twilight_observation_basis_function(filtername=filtername,
-                                                          twi_change=-18.,
+                                                          twi_change=-22.,
                                                           promote=filtername == 'y',
                                                           unseen=filtername == 'u'))
         # bfs.append(fs.CableWrap_unwrap_basis_function(nside=nside, activate_tol=70., unwrap_until=315,
@@ -158,12 +158,16 @@ if __name__ == 'config':
                                                   out_of_bounds_val=hp.UNSEEN, nside=nside))
     pairs_bfs.append(fs.MeridianStripeBasisFunction(nside=nside, zenith_pad=(45.,), width=(35.,)))
     pairs_bfs.append(fs.Moon_avoidance_basis_function(nside=nside, moon_distance=30.))
+    pairs_bfs.append(fs.Twilight_observation_basis_function(filtername=None,
+                                                            twi_change=-20.,
+                                                            promote=False,
+                                                            unseen=True))
 
     # pair_survey = [fs.Pairs_survey_scripted(pairs_bfs, [1., 1., 1.], ignore_obs='DD', min_alt=20.,
     #                                         filt_to_pair='griz')]
     # surveys.append(fs.Pairs_survey_scripted(pairs_bfs, [1., 1., 1.], ignore_obs='DD', min_alt=20.,
     #                                         filt_to_pair='gri'))
-    pair_survey = [fs.Pairs_different_filters_scripted(pairs_bfs, [1., 1., 1.], ignore_obs='DD', min_alt=20.,
+    pair_survey = [fs.Pairs_different_filters_scripted(pairs_bfs, [1., 1., 1., 1.], ignore_obs='DD', min_alt=20.,
                                                        filt_to_pair='griz',
                                                        filter_goals=filter_prop)]
     # surveys.append(fs.Pairs_survey_scripted([], [], ignore_obs='DD'))
@@ -241,10 +245,11 @@ if __name__ == 'config':
                                               nside=nside,
                                               filter_goals=filter_prop))
 
-    # add queue to u and y band survey so it will not change those filters if queue has targets
+    # add queue to surveys so it will not change filter if queue has targets
 
-    surveys[0].extra_features['observe_queue'] = pair_survey[0].extra_features['queue']
-    surveys[5].extra_features['observe_queue'] = pair_survey[0].extra_features['queue']
+    for survey in surveys:
+        survey.extra_features['observe_queue'] = pair_survey[0].extra_features['queue']
+    # surveys[5].extra_features['observe_queue'] = pair_survey[0].extra_features['queue']
 
     for dd in dd_surveys:
         dd.extra_features['observe_queue'] = pair_survey[0].extra_features['queue']
