@@ -48,6 +48,11 @@ if __name__ == 'config':
                                             GP_fraction=0.15, WFD_upper_edge_fraction=0.,
                                             generate_id_map=True)
 
+    cloud_map = fs.generate_cloud_map(target_maps, filtername='i',
+                                      wfd_cloud_max=0.7,
+                                      scp_cloud_max=0.7,
+                                      gp_cloud_max=0.7,
+                                      nes_cloud_max=0.7)
     even_year_target = {}
     odd_year_target = {}
     for fname in target_maps:
@@ -115,10 +120,11 @@ if __name__ == 'config':
         bfs.append(fs.Slewtime_basis_function(filtername=filtername, nside=nside))
         bfs.append(fs.Strict_filter_basis_function(filtername=filtername))
         bfs.append(fs.Zenith_shadow_mask_basis_function(nside=nside, shadow_minutes=60., max_alt=76.))
-        weights = np.array([3.0, 3.0, .3, .3, 0.3, 0.3, 3., 3., 0.])
+        bfs.append(fs.Bulk_cloud_basis_function(max_cloud_map=cloud_map, nside=nside))
+        weights = np.array([3.0, 3.0, .3, .3, 0.3, 0.3, 3., 3., 0., 1.])
         if filtername2 is None:
             # Need to scale weights up so filter balancing still works properly.
-            weights = np.array([6.0, 0.6, 0.6, 3., 3., 0.])
+            weights = np.array([6.0, 0.6, 0.6, 3., 3., 0., 1.])
         # XXX-
         # This is where we could add a look-ahead basis function to include m5_diff in the future.
         # Actually, having a near-future m5 would also help prevent switching to u or g right at twilight?
@@ -154,7 +160,9 @@ if __name__ == 'config':
         bfs.append(fs.Slewtime_basis_function(filtername=filtername, nside=nside))
         bfs.append(fs.Strict_filter_basis_function(filtername=filtername))
         bfs.append(fs.Zenith_shadow_mask_basis_function(nside=nside, shadow_minutes=60., max_alt=76.))
-        weights = np.array([3.0, 0.3, 0.3, 1., 3., 3., 0.])
+        bfs.append(fs.Bulk_cloud_basis_function(max_cloud_map=cloud_map, nside=nside))
+
+        weights = np.array([3.0, 0.3, 0.3, 1., 3., 3., 0., 1.])
         # Might want to try ignoring DD observations here, so the DD area gets covered normally--DONE
         sv = fs.Greedy_survey_fields(bfs, weights, block_size=1, filtername=filtername,
                                      dither=True, nside=nside, ignore_obs='DD',
