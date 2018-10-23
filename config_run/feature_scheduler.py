@@ -8,12 +8,13 @@ as those are expected by the Driver. The way those objects are configured are en
 
 07/2018 - Version 0
 """
-import numpy as np
-import healpy as hp
-import lsst.sims.featureScheduler as fs
-from lsst.ts.scheduler.kernel import SurveyTopology
 
 if __name__ == 'config':
+    import numpy as np
+    import healpy as hp
+    import lsst.sims.featureScheduler as fs
+    from lsst.ts.scheduler.kernel import SurveyTopology
+
     survey_topology = SurveyTopology()
     survey_topology.num_general_props = 4
     survey_topology.general_propos = ["NorthEclipticSpur", "SouthCelestialPole", "WideFastDeep", "GalacticPlane"]
