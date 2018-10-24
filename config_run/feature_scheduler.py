@@ -68,7 +68,7 @@ def generate_blob_surveys(nside):
 
     # Set up observations to be taken in blocks
     filter1s = ['u', 'g', 'r', 'i', 'z', 'y']
-    filter2s = [None, 'g', 'r', 'i', None, None]
+    filter2s = [None, 'r', 'i', 'z', None, None]
 
     pair_surveys = []
     for filtername, filtername2 in zip(filter1s, filter2s):
