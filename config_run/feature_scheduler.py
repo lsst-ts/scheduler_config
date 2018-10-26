@@ -164,12 +164,12 @@ if __name__ == 'config':
                                                             unseen=True))
 
     pair_survey = [fs.Pairs_survey_scripted(pairs_bfs, [1., 1., 1., 1.], ignore_obs='DD', min_alt=20.,
-                                            filt_to_pair='z')]
+                                            filt_to_pair='griz')]
     # surveys.append(fs.Pairs_survey_scripted(pairs_bfs, [1., 1., 1.], ignore_obs='DD', min_alt=20.,
     #                                         filt_to_pair='gri'))
-    pair_survey = [fs.Pairs_different_filters_scripted(pairs_bfs, [1., 1., 1., 1.], ignore_obs='DD', min_alt=20.,
-                                                       filt_to_pair='gri',
-                                                       filter_goals=filter_prop)]
+    # pair_survey = [fs.Pairs_different_filters_scripted(pairs_bfs, [1., 1., 1., 1.], ignore_obs='DD', min_alt=20.,
+    #                                                    filt_to_pair='gri',
+    #                                                    filter_goals=filter_prop)]
     # surveys.append(fs.Pairs_survey_scripted([], [], ignore_obs='DD'))
 
     # Set up the DD
