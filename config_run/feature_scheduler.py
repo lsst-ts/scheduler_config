@@ -122,6 +122,7 @@ if __name__ == 'config':
                                                         proportion=1.,
                                                         aways_available=False))
         bfs.append(fs.Avoid_Fast_Revists(filtername=None, gap_min=120., nside=nside))  # Hide region for 2 hours
+        bfs.append(fs.Avoid_Fast_Revists(filtername=filtername, gap_min=2880., nside=nside))  # Hide region for 2 days
         bfs.append(fs.Bulk_cloud_basis_function(max_cloud_map=cloud_map, nside=nside))
         bfs.append(fs.Moon_avoidance_basis_function(nside=nside, moon_distance=40.))
         bfs.append(fs.Twilight_observation_basis_function(filtername=filtername,
@@ -133,7 +134,7 @@ if __name__ == 'config':
         # bfs.append(fs.NorthSouth_scan_basis_function(length=70.))
 
         # weights = np.array([2., 0.1, 0.1, 1., 3., 1.5, 1.0, 1.0, 1.0])
-        weights = np.array([0.5, 1., target_map_weights[filtername], 1., 1., 1.0, 1.0, 1.0, 1.0,
+        weights = np.array([0.5, 1., target_map_weights[filtername], 1., 1., 1.0, 1.0, 1.0, 1.0, 1.0,
                             twilight_weight[filtername]])
         surveys.append(fs.Greedy_survey_fields(bfs, weights, block_size=1,
                                                filtername=filtername, dither=True,
