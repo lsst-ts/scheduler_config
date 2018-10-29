@@ -122,7 +122,7 @@ if __name__ == 'config':
                                                         proportion=1.,
                                                         aways_available=False))
         bfs.append(fs.Avoid_Fast_Revists(filtername=None, gap_min=120., nside=nside))  # Hide region for 2 hours
-        bfs.append(fs.Avoid_Fast_Revists(filtername=filtername, gap_min=2880., nside=nside))  # Hide region for 2 days
+        bfs.append(fs.Avoid_Fast_Revists(filtername=filtername, gap_min=1440., nside=nside))  # Hide region for 1 day
         bfs.append(fs.Bulk_cloud_basis_function(max_cloud_map=cloud_map, nside=nside))
         bfs.append(fs.Moon_avoidance_basis_function(nside=nside, moon_distance=40.))
         bfs.append(fs.Twilight_observation_basis_function(filtername=filtername,
