@@ -85,6 +85,13 @@ if __name__ == 'config':
                           'z': 0.05,
                           'y': 0.05}
 
+    twilight_weight = {'u': 1.,
+                       'g': 1.,
+                       'r': 1.,
+                       'i': 1.,
+                       'z': 1.,
+                       'y': 10.}
+
     for filtername in filters:
         bfs = list()
         # bfs.append(fs.M5_diff_basis_function(filtername=filtername, nside=nside))
@@ -117,12 +124,17 @@ if __name__ == 'config':
         bfs.append(fs.Avoid_Fast_Revists(filtername=None, gap_min=2880., nside=nside))  # Hide region for 2 days
         bfs.append(fs.Bulk_cloud_basis_function(max_cloud_map=cloud_map, nside=nside))
         bfs.append(fs.Moon_avoidance_basis_function(nside=nside, moon_distance=40.))
+        bfs.append(fs.Twilight_observation_basis_function(filtername=filtername,
+                                                          twi_change=-22.,
+                                                          promote=filtername == 'y',
+                                                          unseen=filtername == 'u'))
         # bfs.append(fs.CableWrap_unwrap_basis_function(nside=nside, activate_tol=70., unwrap_until=315,
         #                                               max_duration=90.))
         # bfs.append(fs.NorthSouth_scan_basis_function(length=70.))
 
         # weights = np.array([2., 0.1, 0.1, 1., 3., 1.5, 1.0, 1.0, 1.0])
-        weights = np.array([0.5, 1., target_map_weights[filtername], 1., 1., 1.0, 1.0, 1.0, 1.0])
+        weights = np.array([0.5, 1., target_map_weights[filtername], 1., 1., 1.0, 1.0, 1.0, 1.0,
+                            twilight_weight[filtername]])
         surveys.append(fs.Greedy_survey_fields(bfs, weights, block_size=1,
                                                filtername=filtername, dither=True,
                                                nside=nside,
@@ -268,5 +280,14 @@ if __name__ == 'config':
                                               fraction_limit=0.0012, ha_limits=([0., 0.5], [23.5, 24.]),
                                               nside=nside,
                                               filter_goals=filter_prop))
+
+    # add queue to surveys so it will not change filter if queue has targets
+
+    for survey in surveys:
+        survey.extra_features['observe_queue'] = pair_survey_1[1].extra_features['queue']
+    # surveys[5].extra_features['observe_queue'] = pair_survey[0].extra_features['queue']
+
+    for dd in dd_surveys:
+        dd.extra_features['observe_queue'] = pair_survey_1[1].extra_features['queue']
 
     scheduler = fs.Core_scheduler([pair_survey_1, pair_survey_2, dd_surveys, surveys], nside=nside)  # Required
