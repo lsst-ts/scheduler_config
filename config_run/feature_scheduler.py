@@ -43,15 +43,21 @@ if __name__ == 'config':
     filters = ['r']
     surveys = []
 
+    regions = ({'ha_min': 2., 'ha_max': 22.,
+                           'alt_max': 88., 'alt_min': 55.,
+                           'dec_min': -90., 'dec_max': 90,
+                           'az_min': 5., 'az_max': 175.,
+                           'weight': 1.},)
     for filtername in filters:
         bfs = list()
         # bfs.append(fs.M5_diff_basis_function(filtername=filtername, nside=nside))
         bfs.append(fs.HourAngle_bonus_basis_function(max_hourangle=3.))
-        bfs.append(fs.CableWrap_unwrap_basis_function(minAz=-180., maxAz=180.,))
+        bfs.append(fs.CableWrap_unwrap_basis_function(minAz=2., maxAz=170.,))
         bfs.append(fs.Target_map_basis_function(filtername=filtername,
                                                 target_map=target_maps[filtername][0],
                                                 out_of_bounds_val=hp.UNSEEN, nside=nside,
                                                 norm_factor=norm_factor))
+        bfs.append(fs.HADecAltAzPatchBasisFunction(patches=regions))
         bfs.append(fs.MeridianStripeBasisFunction(nside=nside, width=width,
                                                   weight=weight,
                                                   height=height,
@@ -59,7 +65,7 @@ if __name__ == 'config':
         bfs.append(fs.Aggressive_Slewtime_basis_function(filtername=filtername, nside=nside, order=6., hard_max=30.))
         bfs.append(fs.Avoid_Fast_Revists(filtername=None, gap_min=480., nside=nside))  # Hide region for 0.5 hours
 
-        weights = np.array([2., 1, 0.1, 1., 1., 1.])
+        weights = np.array([2., 1, 0.1, 1., 1., 1., 1.])
         surveys.append(fs.Greedy_survey_fields(bfs, weights, block_size=1,
                                                filtername=filtername, dither=True,
                                                nside=nside,

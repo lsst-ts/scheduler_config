@@ -22,13 +22,13 @@ config.altitude_maxpos=86.5
 config.settle_time=3.0
 
 # Maximum absolute azimuth limit (units=degrees) of telescope.
-config.azimuth_maxpos=190.0
+config.azimuth_maxpos=178.0
 
 # Maximum speed (units=degrees/second) of telescope azimuth movement.
 config.azimuth_maxspeed=7.0
 
 # Minimum absolute azimuth limit (units=degrees) of telescope.
-config.azimuth_minpos=-190.0
+config.azimuth_minpos=2.0
 
 # Maximum deceleration (units=degrees/second**2) of telescope altitude movement.
 config.altitude_decel=3.5
